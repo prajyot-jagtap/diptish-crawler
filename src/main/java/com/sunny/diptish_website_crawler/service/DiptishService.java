@@ -10,6 +10,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -27,11 +28,12 @@ public class DiptishService {
     RestClient restClient;
     private BufferedWriter writer;
     private int counter = 0;
-    private final String LOCAL_FILE_PATH = "D:\\JAVA Workspace\\diptish-website-crawler\\diptish-website-crawler\\";
-    private static final String fileName = "doctor-profile-link";
-
-    //1000 = 1 second
-    private static final long WAIT_TIME = 1000;
+    @Value("${diptish.local-file-path}")
+    private String LOCAL_FILE_PATH;
+    @Value("${diptish.local-file-name}")
+    private String fileName;
+    @Value("${diptish.wait-time}")
+    private long WAIT_TIME;
     public DiptishService(){
 
     }

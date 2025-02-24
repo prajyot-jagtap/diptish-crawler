@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: diptish-website-crawler
+
+
+diptish:
+  local-file-path: D:\JAVA Workspace\diptish-website-crawler\diptish-website-crawler\
+  local-file-name: doctor-profile-link
+  wait-time: 1000
