@@ -7,3 +7,7 @@ diptish:
   local-file-path: D:\JAVA Workspace\diptish-website-crawler\diptish-website-crawler\     #Location where you want the file to be created
   local-file-name: doctor-profile-link                                                    #Can be anything
   wait-time: 1000                                                                         #1000 = 1 second
+
+logging:
+  pattern:
+    level: '[${spring.application.name:},%X{traceId},%X{spanId}]'

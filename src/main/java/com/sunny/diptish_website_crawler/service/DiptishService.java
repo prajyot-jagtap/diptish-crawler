@@ -4,6 +4,8 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import com.sunny.diptish_website_crawler.model.Doctor;
 import com.sunny.diptish_website_crawler.model.FileRequest;
 import jakarta.annotation.PreDestroy;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.jsoup.Jsoup;
@@ -24,6 +26,7 @@ import java.util.List;
 @Service
 public class DiptishService {
 
+    private static final Logger logger = LogManager.getLogger(DiptishService.class);
     @Autowired
     RestClient restClient;
     private BufferedWriter writer;
@@ -40,13 +43,13 @@ public class DiptishService {
 
     public String getProfileLinksFile() {
         String response = restClient.get()
-                .uri("https://medicine.yale.edu/faculty/faculty-directory/#internal-medicine")
+                .uri("https://medicine.yale.edu/neurology/people/")
                 .retrieve()
                 .body(String.class);
 
         try{
             Document document = Jsoup.parse(response);
-            Elements elements = document.select("div.js-generic-anchored-list-category-items-InternalMedicine");
+            Elements elements = document.select("div.categorized-list__inner-list");
             Elements subElements = elements.select("li.link-items-list__item");
             createFile(fileName);
             writer.write("First Name,Last Name,Profile Link");
@@ -61,14 +64,17 @@ public class DiptishService {
                     writer.newLine();
                 } catch (Exception e) {
                     System.out.println("Error happened --> " + e.getMessage());
+                    logger.info("Error happened --> {}", e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
             writer.close();
             System.out.println("File " + fileName + ".csv created successfully!");
+            logger.info("File {}.csv created successfully!",fileName);
         }
         catch (Exception e){
             System.out.println("Error happened --> " + e.getMessage());
+            logger.info("Error happened --> {}", e.getMessage());
             return "Error happened during file creation. Could not create file " + fileName + ".csv";
         }
         return "File " + fileName + ".csv created successfully!";
@@ -79,12 +85,15 @@ public class DiptishService {
                 .retrieve()
                 .onStatus(HttpStatusCode::is2xxSuccessful, (request, serverResponse) -> {
                     System.out.println("Received success response from server");
+                    logger.info("Received success response from server");
                 })
                 .onStatus(HttpStatusCode::is4xxClientError, (request, serverResponse) -> {
                     System.out.println("Received HTTP 4XX error.");
+                    logger.info("Received HTTP 4XX error.");
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (request, serverResponse) -> {
                     System.out.println("Received HTTP 5XX error.");
+                    logger.info("Received HTTP 5XX error.");
                 })
                 .body(String.class);
         try {
@@ -100,18 +109,22 @@ public class DiptishService {
                     emailAddress = (mainEntity.containsKey("email") ? mainEntity.get("email").toString() : null);
                     if(null!=emailAddress) {
                         System.out.println("Writing record number " + (++counter) +" to file --> " + name[0]+", "+name[1]+", "+emailAddress);
+                        logger.info("Writing record number {} to file --> {} {} {}", ++counter, name[0], name[1], emailAddress);
                         writer.write(name[0]+","+name[1]+","+emailAddress);
                         writer.newLine();
                     }
                     else {
                         System.out.println("Email Address not found so not writing record to file --> "+ name[0]+" "+name[1]);
+                        logger.info("Email Address not found so not writing record to file --> {} {}",name[0], name[1]);
                     }
                 }
             } else {
                 System.out.println("Null response from profile page link.");
+                logger.info("Null response from profile page link.");
             }
         } catch (Exception e) {
             System.out.println("Error happened --> " + e.getMessage());
+            logger.error("Error happened --> {}",e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -139,17 +152,20 @@ public class DiptishService {
                             }
                             catch (Exception e){
                                 System.out.println("Error happened --> " + e.getMessage());
+                                logger.error("Error happened --> {}",e.getMessage());
                             }
                         });
                 counter = 0;
                 writer.close();
                 System.out.println("Successfully created file " + fileRequest.getFileName() + ".csv");
+                logger.info("Successfully created file {}.csv",fileRequest.getFileName());
             } else {
                 return "File " + fileName + ".csv is Empty";
             }
         }
         catch (Exception e){
             System.out.println("Error happened while reading file --> " + e.getMessage());
+            logger.error("Error happened while reading file --> {}",e.getMessage());
             return "Could not create file " + fileRequest.getFileName() + ".csv";
         }
         return "Successfully created file " + fileRequest.getFileName() + ".csv";
@@ -162,6 +178,7 @@ public class DiptishService {
     @PreDestroy
     public void finishProcessing() throws IOException {
         System.out.println("Saving data and closing file.");
+        logger.info("Saving data and closing file.");
         writer.close();
     }
 }
